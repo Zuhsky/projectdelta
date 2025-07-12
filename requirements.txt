@@ -1,0 +1,24 @@
+# Core dependencies
+requests==2.31.0
+click==8.1.7
+rich==13.7.0
+colorama==0.4.6
+pydantic==2.5.2
+jsonschema==4.20.0
+gitpython==3.1.40
+python-dotenv==1.0.0
+pathlib2==2.3.7
+typing-extensions==4.8.0
+
+# GPU-optimized additions
+aiohttp==3.9.1
+asyncio-throttle==1.0.2
+psutil==5.9.6
+GPUtil==1.4.0
+tenacity==8.2.3
+structlog==23.2.0
+pyyaml==6.0.1
+click-option-group==0.5.6
+
+# Performance monitoring
+nvidia-ml-py3==7.352.0
