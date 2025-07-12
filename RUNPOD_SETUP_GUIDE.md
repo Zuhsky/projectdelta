@@ -1,351 +1,179 @@
-# 🚀 AI Development Team Orchestrator - RunPod Setup Guide
+# RunPod Setup Guide for AI Development Team Orchestrator
 
-## 📋 RunPod Configuration & Setup
+## 🚀 Quick Start Commands for RunPod
 
-### Step 1: Choose the Right RunPod Template
-
-**Recommended Configuration:**
-- **Template**: `runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04`
-- **GPU**: RTX 4090 (24GB VRAM) - Best performance/cost ratio
-- **Alternative**: RTX 3090 (24GB VRAM) - More budget-friendly
-- **CPU**: 8+ vCPU cores
-- **RAM**: 32GB+ system RAM
-- **Storage**: 50GB+ container disk
-
-**Budget Options ($0.7/hour max):**
-- RTX 3090: ~$0.34/hour
-- RTX 4090: ~$0.79/hour
-- A40: ~$0.60/hour
-
-### Step 2: Create Your RunPod Instance
-
-1. **Go to RunPod Console**: https://www.runpod.io/console/pods
-2. **Click "Deploy"** → "GPU Pod"
-3. **Select Template**: Choose PyTorch template above
-4. **Configure**:
-   ```
-   Container Disk Size: 50GB
-   Volume Disk Size: 20GB (optional for persistent storage)
-   Expose HTTP Ports: 8888,3000,11434
-   Environment Variables: None needed initially
-   ```
-5. **Deploy Pod**
-
-## 🛠️ Installation & Setup Process
-
-### Step 3: Access Your Pod
-
-1. **Click "Connect"** on your pod
-2. **Choose "Start Web Terminal"**
-3. Wait for terminal to load
-
-### Step 4: System Setup
-
+### 1. **Initial Setup**
 ```bash
-# Update system
+# Update system and install dependencies
 apt update && apt upgrade -y
+apt install -y curl wget git python3 python3-pip python3-venv
 
-# Install essential tools
-apt install -y curl wget git build-essential python3-pip
+# Clone your repository
+git clone https://github.com/Zuhsky/projectdelta.git
+cd projectdelta
 
-# Install Node.js (for generated projects)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-apt install -y nodejs
-
-# Verify installations
-python3 --version
-node --version
-git --version
-```
-
-### Step 5: Install Ollama
-
-```bash
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Start Ollama service in background
-nohup ollama serve > ollama.log 2>&1 &
-
-# Wait a moment for service to start
-sleep 5
-
-# Verify Ollama is running
-curl http://localhost:11434/api/tags
+# Start Ollama service
+systemctl start ollama
+systemctl enable ollama
 ```
 
-### Step 6: Download AI Models
-
+### 2. **Pull Large Models (30B+)**
 ```bash
-# Pull required models (this will take 15-30 minutes)
-echo "Downloading Llama2:7b-Chat..."
-ollama pull llama2:7b-chat
-
-echo "Downloading DeepSeek-Coder:33b..."
-ollama pull deepseek-coder:33b
-
-# Verify models are downloaded
-ollama list
+# Pull your preferred 30B+ model (choose one)
+ollama pull llama2:70b
+# OR
+ollama pull codellama:70b
+# OR
+ollama pull mixtral:8x7b
+# OR
+ollama pull qwen2.5:72b
 ```
 
-**Expected Output:**
-```
-NAME                    ID              SIZE      MODIFIED
-llama2:7b-chat:latest  abc123...       3.8GB     2 minutes ago
-deepseek-coder:33b      def456...       19GB      5 minutes ago
-```
-
-### Step 7: Clone and Setup the Orchestrator
-
+### 3. **Set Environment Variables**
 ```bash
-# Clone the repository
-git clone https://github.com/salsa1zg/ai-development-team-orchestrator.git
+# Create environment file
+cp env.example .env
 
-# Navigate to project
-cd ai-development-team-orchestrator
-
-# Install Python dependencies
-pip3 install -r requirements.txt
-
-# Make setup script executable
-chmod +x setup.sh
-
-# Run setup (this will verify everything)
-./setup.sh
+# Edit with your settings
+nano .env
 ```
 
-## 🎮 Using the AI Development Team Orchestrator
+**Recommended .env settings for RunPod:**
+```env
+# Ollama Configuration
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama2:70b
+OLLAMA_TIMEOUT=300
+OLLAMA_MAX_TOKENS=4096
+OLLAMA_TEMPERATURE=0.7
 
-### Step 8: Start the Orchestrator
+# GPU Optimization
+USE_GPU=true
+GPU_MEMORY_LIMIT=80
+BATCH_SIZE=4
+PARALLEL_REQUESTS=2
 
-```bash
-# Make sure you're in the project directory
-cd ai-development-team-orchestrator
+# Logging
+LOG_LEVEL=INFO
+LOG_FILE=orchestrator.log
 
-# Start the orchestrator
-python3 main.py
+# Performance
+ENABLE_CACHING=true
+CACHE_TTL=3600
+ENABLE_MONITORING=true
 ```
 
-### Step 9: Follow the Interactive Wizard
-
-The tool will guide you through:
-
-1. **Welcome Screen** - Shows your AI team
-2. **Prerequisites Check** - Verifies Ollama and models
-3. **Project Wizard** - 12+ questions about your app idea
-4. **Development Pipeline** - Watch AI agents work:
-   - 📋 Planner analyzes requirements
-   - 🏗️ Builder creates the application
-   - 🔍 Reviewer checks code quality
-   - 🔧 Fixer applies optimizations
-   - ✅ Finalizer adds documentation
-   - 🚀 Git Pusher sets up deployment
-
-### Step 10: Access Generated Projects
-
+### 4. **Install Python Dependencies**
 ```bash
-# View generated projects
-ls -la output/
+# Create virtual environment
+python3 -m venv venv
+source venv/bin/activate
 
-# Navigate to your project
-cd output/your-project-name
+# Install dependencies
+pip install -r requirements.txt
 
-# Install project dependencies
-npm install
-
-# Start development server
-npm run dev
+# For development (optional)
+pip install -r requirements-dev.txt
 ```
 
-## 🌐 Port Configuration & Access
-
-### RunPod Port Setup
-
-When creating your pod, expose these ports:
-- **11434**: Ollama API service
-- **3000**: Next.js development server (for generated apps)
-- **8888**: Alternative web access
-
-### Access Your Generated App
-
-1. **In RunPod Console**, click your pod
-2. **Click "Connect"** → "Connect to HTTP Service [3000]"
-3. **Your app will open** in a new browser tab
-
-## 💡 RunPod-Specific Tips
-
-### Optimize for Cost
-
+### 5. **Run the Orchestrator**
 ```bash
-# Monitor GPU usage
+# Test GPU setup
+python test_gpu_setup.py
+
+# Run the main orchestrator
+python main.py
+
+# Or run with specific project
+python main.py --project-name "my-nextjs-app" --description "A modern e-commerce platform"
+```
+
+### 6. **Monitor Performance**
+```bash
+# Check GPU usage
 nvidia-smi
 
-# Stop Ollama when not in use
-pkill ollama
+# Monitor Ollama logs
+journalctl -u ollama -f
 
-# Use smaller models for testing
-ollama pull llama2:7b-chat  # Main chat model
-```
-
-### Persistent Storage Setup
-
-If you want to keep projects between sessions:
-
-```bash
-# Create persistent directory
-mkdir -p /workspace/persistent-projects
-
-# Symlink to persistent storage
-ln -s /workspace/persistent-projects ~/ai-development-team-orchestrator/output/persistent
-```
-
-### Background Processing
-
-```bash
-# Run orchestrator in background
-nohup python3 main.py > orchestrator.log 2>&1 &
-
-# Monitor progress
+# Check orchestrator logs
 tail -f orchestrator.log
+
+# Monitor system resources
+htop
 ```
 
-## 🔧 Troubleshooting Guide
-
-### Common Issues & Solutions
-
-**1. Ollama Not Starting**
+### 7. **Optional: Setup Auto-restart**
 ```bash
-# Check if port is in use
-netstat -tulpn | grep 11434
-
-# Kill existing process
-pkill ollama
-
-# Restart service
-ollama serve &
+# Create systemd service for auto-restart
+nano /etc/systemd/system/ai-orchestrator.service
 ```
 
-**2. Out of Memory**
-```bash
-# Check memory usage
-free -h
+**Service file content:**
+```ini
+[Unit]
+Description=AI Development Team Orchestrator
+After=network.target ollama.service
 
-# Use smaller model
-ollama pull llama2:7b-chat
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/projectdelta
+Environment=PATH=/root/projectdelta/venv/bin
+ExecStart=/root/projectdelta/venv/bin/python main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
 ```
-
-**3. Model Download Fails**
-```bash
-# Check internet connection
-ping google.com
-
-# Download manually
-ollama pull llama2:7b-chat --insecure
-```
-
-**4. Generated App Won't Start**
-```bash
-# Install Node.js if missing
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs
-
-# Check project directory
-ls -la output/your-project/
-cd output/your-project/
-npm install
-```
-
-## 📊 Expected Performance
-
-### Generation Times (RTX 4090):
-- **Requirements Analysis**: 2-3 minutes
-- **Code Generation**: 10-15 minutes
-- **Code Review**: 3-5 minutes
-- **Bug Fixes**: 5-8 minutes
-- **Documentation**: 2-3 minutes
-- **Total**: ~25-35 minutes
-
-### Resource Usage:
-- **GPU Memory**: 18-20GB during generation
-- **System RAM**: 8-12GB
-- **Disk Space**: 30-40GB (models + generated code)
-
-## 🎯 Complete Workflow Example
 
 ```bash
-# 1. SSH into RunPod (Use web terminal)
-
-# 2. Quick setup
-curl -fsSL https://ollama.ai/install.sh | sh && \
-ollama serve & && \
-sleep 5 && \
-git clone https://github.com/salsa1zg/ai-development-team-orchestrator.git && \
-cd ai-development-team-orchestrator && \
-pip3 install -r requirements.txt
-
-# 3. Download models
-ollama pull llama2:7b-chat && ollama pull deepseek-coder:33b
-
-# 4. Start orchestrator
-python3 main.py
-
-# 5. Follow wizard prompts
-# (Answer questions about your app idea)
-
-# 6. Wait for generation
-# (Grab coffee, 25-35 minutes)
-
-# 7. Test your app
-cd output/your-project-name && npm install && npm run dev
-
-# 8. Access via RunPod HTTP port 3000
+# Enable and start service
+systemctl daemon-reload
+systemctl enable ai-orchestrator
+systemctl start ai-orchestrator
 ```
 
-## 🔒 Security & Best Practices
+## 📊 **Cost Optimization Tips for RunPod**
 
-1. **Never store sensitive data** in RunPod instances
-2. **Use volume storage** for important projects
-3. **Stop instances** when not in use to save costs
-4. **Monitor resource usage** to avoid overcharges
-5. **Backup generated code** to GitHub or external storage
+1. **Use Spot Instances** for development/testing
+2. **Monitor GPU Usage** with `nvidia-smi`
+3. **Stop instances** when not in use
+4. **Use smaller models** for initial testing (7B-13B)
+5. **Enable caching** to reduce API calls
 
-## 💰 Cost Management
+## 🔧 **Troubleshooting**
 
-**Estimated Costs:**
-- **Setup (one-time)**: ~$2-3 (model downloads)
-- **Per app generation**: ~$0.30-0.70 (30-40 minutes)
-- **Development/testing**: ~$0.50/hour
-
-**Cost-Saving Tips:**
-- Use spot instances when available
-- Stop pod immediately after generation
-- Use smaller models for testing concepts
-- Batch multiple app generations in one session
-
-## 🚀 Quick Start Commands (Copy & Paste)
-
-### One-Line Setup:
+If you encounter issues:
 ```bash
-apt update && apt install -y curl git python3-pip nodejs npm && curl -fsSL https://ollama.ai/install.sh | sh && ollama serve & && sleep 5
+# Check Ollama status
+systemctl status ollama
+
+# Restart Ollama
+systemctl restart ollama
+
+# Check logs
+journalctl -u ollama -n 50
+
+# Verify GPU access
+nvidia-smi
 ```
 
-### Clone and Install:
+## 🎯 **One-Command Setup Script**
+
+You can also use the provided setup script:
 ```bash
-git clone https://github.com/salsa1zg/ai-development-team-orchestrator.git && cd ai-development-team-orchestrator && pip3 install -r requirements.txt
+chmod +x scripts/setup_runpod.sh
+./scripts/setup_runpod.sh
 ```
 
-### Download Models:
-```bash
-ollama pull llama2:7b-chat && ollama pull deepseek-coder:33b
-```
-
-### Run Orchestrator:
-```bash
-python3 main.py
-```
-
----
-
-**Your AI Development Team Orchestrator is now ready to build production-grade applications on RunPod! 🚀**
-
-For support: https://github.com/salsa1zg/ai-development-team-orchestrator/issues
+This script will automatically:
+- Install all dependencies
+- Setup Ollama
+- Configure environment
+- Pull a default model
+- Test the setup
