@@ -14,13 +14,21 @@ cd projectdelta
 
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
-
-# Start Ollama service
-systemctl start ollama
-systemctl enable ollama
 ```
 
-### 2. **Pull Large Models (30B+)**
+### 2. **Start Ollama (Important for RunPod containers)**
+```bash
+# Start Ollama in background (RunPod containers don't use systemd)
+nohup ollama serve > ollama.log 2>&1 &
+
+# Wait for Ollama to start
+sleep 10
+
+# Verify Ollama is running
+curl http://localhost:11434/api/tags
+```
+
+### 3. **Pull Large Models (30B+)**
 ```bash
 # Pull your preferred 30B+ model (choose one)
 ollama pull llama2:70b
@@ -32,7 +40,7 @@ ollama pull mixtral:8x7b
 ollama pull qwen2.5:72b
 ```
 
-### 3. **Set Environment Variables**
+### 4. **Set Environment Variables**
 ```bash
 # Create environment file
 cp env.example .env
@@ -66,7 +74,7 @@ CACHE_TTL=3600
 ENABLE_MONITORING=true
 ```
 
-### 4. **Install Python Dependencies**
+### 5. **Install Python Dependencies**
 ```bash
 # Create virtual environment
 python3 -m venv venv
@@ -79,7 +87,7 @@ pip install -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
-### 5. **Run the Orchestrator**
+### 6. **Run the Orchestrator**
 ```bash
 # Test GPU setup
 python test_gpu_setup.py
@@ -91,13 +99,13 @@ python main.py
 python main.py --project-name "my-nextjs-app" --description "A modern e-commerce platform"
 ```
 
-### 6. **Monitor Performance**
+### 7. **Monitor Performance**
 ```bash
 # Check GPU usage
 nvidia-smi
 
 # Monitor Ollama logs
-journalctl -u ollama -f
+tail -f ollama.log
 
 # Check orchestrator logs
 tail -f orchestrator.log
@@ -106,36 +114,22 @@ tail -f orchestrator.log
 htop
 ```
 
-### 7. **Optional: Setup Auto-restart**
+### 8. **Useful Commands for RunPod**
 ```bash
-# Create systemd service for auto-restart
-nano /etc/systemd/system/ai-orchestrator.service
-```
+# Start Ollama (if not running)
+nohup ollama serve > ollama.log 2>&1 &
 
-**Service file content:**
-```ini
-[Unit]
-Description=AI Development Team Orchestrator
-After=network.target ollama.service
+# Stop Ollama
+pkill ollama
 
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/root/projectdelta
-Environment=PATH=/root/projectdelta/venv/bin
-ExecStart=/root/projectdelta/venv/bin/python main.py
-Restart=always
-RestartSec=10
+# Check if Ollama is running
+curl http://localhost:11434/api/tags
 
-[Install]
-WantedBy=multi-user.target
-```
+# View Ollama logs
+tail -f ollama.log
 
-```bash
-# Enable and start service
-systemctl daemon-reload
-systemctl enable ai-orchestrator
-systemctl start ai-orchestrator
+# Restart Ollama
+pkill ollama && sleep 2 && nohup ollama serve > ollama.log 2>&1 &
 ```
 
 ## 📊 **Cost Optimization Tips for RunPod**
@@ -150,17 +144,22 @@ systemctl start ai-orchestrator
 
 If you encounter issues:
 ```bash
-# Check Ollama status
-systemctl status ollama
+# Check if Ollama is running
+curl http://localhost:11434/api/tags
 
-# Restart Ollama
-systemctl restart ollama
+# If not running, start it
+nohup ollama serve > ollama.log 2>&1 &
 
-# Check logs
-journalctl -u ollama -n 50
+# Check Ollama logs
+tail -f ollama.log
 
 # Verify GPU access
 nvidia-smi
+
+# Kill and restart Ollama if needed
+pkill ollama
+sleep 2
+nohup ollama serve > ollama.log 2>&1 &
 ```
 
 ## 🎯 **One-Command Setup Script**
@@ -173,7 +172,15 @@ chmod +x scripts/setup_runpod.sh
 
 This script will automatically:
 - Install all dependencies
-- Setup Ollama
+- Setup Ollama (without systemd)
 - Configure environment
 - Pull a default model
 - Test the setup
+
+## 🚨 **Important Notes for RunPod Containers**
+
+- **No systemd**: RunPod containers don't use systemd, so we start Ollama manually
+- **Background process**: Use `nohup` to keep Ollama running in background
+- **Port 11434**: Make sure this port is accessible in your RunPod configuration
+- **GPU access**: Verify GPU is available with `nvidia-smi`
+- **Memory management**: Monitor memory usage with `htop` and `nvidia-smi`

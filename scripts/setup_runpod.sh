@@ -60,21 +60,21 @@ git --version
 print_status "Installing Ollama..."
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Start Ollama service
-print_status "Starting Ollama service..."
-systemctl start ollama
-systemctl enable ollama
+# Start Ollama manually (RunPod containers don't use systemd)
+print_status "Starting Ollama (RunPod containers don't use systemd)..."
+nohup ollama serve > ollama.log 2>&1 &
 
 # Wait for Ollama to start
 print_status "Waiting for Ollama to start..."
-sleep 10
+sleep 15
 
 # Verify Ollama is running
 if curl -s http://localhost:11434/api/tags > /dev/null; then
     print_success "Ollama is running successfully!"
 else
     print_error "Ollama failed to start. Please check the service."
-    systemctl status ollama
+    print_status "Checking Ollama logs..."
+    tail -n 20 ollama.log
     exit 1
 fi
 
@@ -136,9 +136,11 @@ cat >> ~/.bashrc << 'EOF'
 
 # AI Development Team Orchestrator Aliases
 alias ai-orchestrator='cd /root/projectdelta && source venv/bin/activate && python main.py'
-alias ai-status='systemctl status ollama && nvidia-smi'
-alias ai-logs='tail -f orchestrator.log'
-alias ai-restart='systemctl restart ollama'
+alias ai-status='curl http://localhost:11434/api/tags && nvidia-smi'
+alias ai-logs='tail -f ollama.log'
+alias ai-restart='pkill ollama && sleep 2 && nohup ollama serve > ollama.log 2>&1 &'
+alias ai-start='nohup ollama serve > ollama.log 2>&1 &'
+alias ai-stop='pkill ollama'
 EOF
 
 # Print final status
@@ -152,9 +154,11 @@ echo "3. Start the orchestrator: python main.py"
 echo ""
 echo "🔧 Useful commands:"
 echo "- Check GPU: nvidia-smi"
-echo "- Monitor Ollama: journalctl -u ollama -f"
+echo "- Monitor Ollama: tail -f ollama.log"
 echo "- View logs: tail -f orchestrator.log"
-echo "- Restart Ollama: systemctl restart ollama"
+echo "- Start Ollama: nohup ollama serve > ollama.log 2>&1 &"
+echo "- Stop Ollama: pkill ollama"
+echo "- Restart Ollama: pkill ollama && sleep 2 && nohup ollama serve > ollama.log 2>&1 &"
 echo ""
 echo "💡 Cost optimization:"
 echo "- Use spot instances when available"
